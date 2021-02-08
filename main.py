@@ -1,5 +1,6 @@
 from nltk.stem import WordNetLemmatizer
 import json
+from index import Index
 
 # Loads in the bookkeeping.json as a dictionary.
 def loadBookkeeping():
@@ -7,19 +8,17 @@ def loadBookkeeping():
         data = json.load(json_file)
     return data
 
-def indexer():
-    pass
-
-# Creates an entry for the indexer.
-def createEntry(token, docID):
-    pass
-
 
 if __name__ == '__main__':
-    userInput = ''
+    myIndex = Index()
+    bookKeeper = loadBookkeeping()
+    
+
+    '''
     while True:
         userInput = input('Enter a query (type in \'quit\' to exit): ')
         userInput = userInput.lower()
         if userInput == 'quit':
             break
+    '''
 
