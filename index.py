@@ -1,4 +1,10 @@
 from collections import defaultdict
+import json
+
+def loadBookkeeping():
+    with open('WEBPAGES_RAW/bookkeeping.json', 'r') as json_file:
+        data = json.load(json_file)
+    return data
 
 class Index:
     def __init__(self):
@@ -16,3 +22,6 @@ class Index:
     # Adds an entry to the Index, creates a new entry automatically if the token didn't already exist.
     def addIndexEntry(self, token, docid, tf_idf):
         self.index[token].append(dict(docID=docid, tfidf=tf_idf))
+
+if __name__ == "__main__":
+    pass
