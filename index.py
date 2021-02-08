@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json
+from bs4 import BeautifulSoup
 
 def loadBookkeeping():
     with open('WEBPAGES_RAW/bookkeeping.json', 'r') as json_file:
@@ -24,4 +25,6 @@ class Index:
         self.index[token].append(dict(docID=docid, tfidf=tf_idf))
 
 if __name__ == "__main__":
-    pass
+    myData = loadBookkeeping()
+    for docID, url in myData.items():
+        pass
