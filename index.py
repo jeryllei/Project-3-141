@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 from bs4 import BeautifulSoup
+import pymongo
 
 def loadBookkeeping():
     with open('WEBPAGES_RAW/bookkeeping.json', 'r') as json_file:
