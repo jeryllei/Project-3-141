@@ -2,6 +2,8 @@ from collections import defaultdict
 import json
 from bs4 import BeautifulSoup
 import pymongo
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 def loadBookkeeping():
     with open('WEBPAGES_RAW/bookkeeping.json', 'r') as json_file:
@@ -44,13 +46,32 @@ def constructIndex(data, collection):
         with open(directory, 'r', encoding='utf-8') as html_page:
             soup = BeautifulSoup(html_page, 'html.parser')
             page_text = soup.getText()
-            page_title = soup.head
-            if page_title != None and soup.head.title != None:
-                page_title = str(soup.head.title.text).strip()
-            else:
-                page_title = 'No title'
-            collection.insert_one({'docID': docID, 'url': url, 'page_title': page_title})
-            print('Page indexed (ID: %s): %s', (docID, url))
+
+            # page_title = soup.head
+            # if page_title != None and soup.head.title != None:
+            #     page_title = str(soup.head.title.text).strip()
+            # else:
+            #     page_title = 'No title'
+            # collection.insert_one({'docID': docID, 'url': url, 'page_title': page_title})
+            
+            page_text_tokenized = word_tokenize(page_text)
+            lemmatizer = WordNetLemmatizer()
+            page_text_lemmatized = [lemmatizer.lemmatize(word) for word in page_text_tokenized if word.isalnum()]
+
+            token_dictionary = defaultdict(int)
+            for word in page_text_lemmatized:
+                token_dictionary[word] += 1
+            
+            for token, freq in token_dictionary.items():
+                if collection.find_one({'_id': token}) == None:
+                    collection.insert_one({'_id': token,
+                                            'postings': [{'docID': docID, 'frequency': freq, 'tf_idf': 0, 'tags': []}]
+                    })
+                else:
+                    new_post = {'docID': docID, 'frequency': freq, 'tf_idf': 0, 'tags': []}
+                    collection.find_one_and_update({'_id': token}, {'$push': {'postings': new_post}})
+            
+            print(f'Page indexed (ID: {docID}): {url}')
     return
 
 if __name__ == "__main__":
