@@ -1,3 +1,4 @@
+from collections import defaultdict
 import pymongo
 import json
 
@@ -29,10 +30,30 @@ if __name__ == '__main__':
         # Handles input that is more than 1 word.
         if len(userInput.split(' ')) > 1:
             userInput = [inpu.lower() for inpu in userInput.split(' ')]
-            i = 1
-
+            # ranked_results is a dictionary of docID keys and sum of tf-idf scores values.
+            # Results that contain more parts of the query will be handled already by how a defaultdict functions.
+            ranked_results = defaultdict(float)
+            # ranked_IDs is a list of document IDs, in descending order of scores.
+            ranked_IDs = []
             for word in userInput:
-                pass
+                word_results = myCollection.find_one()
+                if word_results != None:
+                    # word results is the postings list for a token
+                    word_results = word_results['postings']
+                    for post in word_results:
+                        ranked_results[post['docID']] += post['tf_idf']
+            
+            # Sorting a dictionary by descending value and outputting keys to a list.
+            # Modified code from: https://stackoverflow.com/a/613218
+            ranked_IDs = [docID for docID, score in sorted(ranked_results.items(), key=lambda item: item[1], reverse=True)]
+
+            i = 1
+            if len(ranked_IDs) > 0:
+                for docID in ranked_IDs:
+                    print(f'Result {i} of {len(ranked_IDs)}\tDocID: {docID}\tURL: {docIDs[docID]}')
+                print(f'End of query results. {len(ranked_IDs)} total results found.\n')
+            else:
+                print('Search query returned no results.\n')
 
         # Handles single word inputs.
         else:
