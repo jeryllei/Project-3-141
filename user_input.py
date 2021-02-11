@@ -22,24 +22,27 @@ if __name__ == '__main__':
     docIDs = loadBookkeeping()
     
     while True:
-        userInput = input('Enter a query (type in \'quit\' to exit): ')
+        userInput = input('Enter a query (type in \'quit\' to exit): ').lower()
         if userInput == 'quit':
             print('Exiting program...')
             break
         
         # Handles input that is more than 1 word.
         if len(userInput.split(' ')) > 1:
-            userInput = [inpu.lower() for inpu in userInput.split(' ')]
+            userInput = [inpu for inpu in userInput.split(' ')]
             # ranked_results is a dictionary of docID keys and sum of tf-idf scores values.
             # Results that contain more parts of the query will be handled already by how a defaultdict functions.
             ranked_results = defaultdict(float)
             # ranked_IDs is a list of document IDs, in descending order of scores.
             ranked_IDs = []
+
+            # For each word in the user input, it finds if it is in the index and collects the documents and tf-idf scores associated with them into ranked_results.
             for word in userInput:
                 word_results = myCollection.find_one()
                 if word_results != None:
                     # word results is the postings list for a token
                     word_results = word_results['postings']
+                    # Assign docID and tf-idf pairs into ranked_results dictionary to be sorted later into ranked_IDs.
                     for post in word_results:
                         ranked_results[post['docID']] += post['tf_idf']
             
@@ -57,7 +60,6 @@ if __name__ == '__main__':
 
         # Handles single word inputs.
         else:
-            userInput = userInput.lower()
             if myCollection.find_one({'_id': userInput}) != None:
                 # results is a list of dictionaries
                 results = myCollection.find_one({'_id': userInput})['postings']
