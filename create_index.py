@@ -60,7 +60,7 @@ def constructIndex(data, collection):
 
             token_dictionary = defaultdict(int)
             for word in page_text_lemmatized:
-                token_dictionary[word] += 1
+                token_dictionary[word.lower()] += 1
             
             for token, freq in token_dictionary.items():
                 if collection.find_one({'_id': token}) == None:

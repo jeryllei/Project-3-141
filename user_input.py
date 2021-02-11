@@ -24,11 +24,19 @@ if __name__ == '__main__':
         userInput = input('Enter a query (type in \'quit\' to exit): ')
         userInput = userInput.lower()
         if userInput == 'quit':
+            print('Exiting program...')
             break
         else:
             if myCollection.find_one({'_id': userInput}) != None:
-                pass
+                # results is a list of dictionaries
+                results = myCollection.find_one({'_id': userInput})['postings']
+                i = 1
+                for post in results:
+                    result_docID = post['docID']
+                    print(f'Result {i} of {len(results)}\tDocID: {result_docID}\tURL: {docIDs[result_docID]}')
+                    i += 1
+                print(f'End of query results. {len(results)} total results found.\n')
             else:
-                print('Search query returned no results.')
+                print('Search query returned no results.\n')
     
 
