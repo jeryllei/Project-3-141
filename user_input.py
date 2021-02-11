@@ -54,6 +54,7 @@ if __name__ == '__main__':
             if len(ranked_IDs) > 0:
                 for docID in ranked_IDs:
                     print(f'Result {i} of {len(ranked_IDs)}\tDocID: {docID}\tURL: {docIDs[docID]}')
+                    i += 1
                 print(f'End of query results. {len(ranked_IDs)} total results found.\n')
             else:
                 print('Search query returned no results.\n')
