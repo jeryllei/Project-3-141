@@ -22,11 +22,26 @@ if __name__ == '__main__':
     
     while True:
         userInput = input('Enter a query (type in \'quit\' to exit): ')
-        userInput = userInput.lower()
         if userInput == 'quit':
             print('Exiting program...')
             break
+        
+        # Handles input that is more than 1 word.
+        if len(userInput.split(' ')) > 1:
+            userInput = [inpu.lower() for inpu in userInput.split(' ')]
+            i = 1
+            for word in userInput:
+                if myCollection.find_one({'_id': word}) != None:
+                    # results is a list of dictionaries
+                    results = myCollection.find_one({'_id': word})['postings']
+                    for post in results:
+                        result_docID = post['docID']
+                        print(f'Result {i}\tDocID: {result_docID}\tURL: {docIDs[result_docID]}')
+                        i += 1
+            print(f'End of query results. {i} total results found.\n')
+        # Handles single word inputs.
         else:
+            userInput = userInput.lower()
             if myCollection.find_one({'_id': userInput}) != None:
                 # results is a list of dictionaries
                 results = myCollection.find_one({'_id': userInput})['postings']
