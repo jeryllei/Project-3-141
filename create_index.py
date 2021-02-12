@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import pymongo
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.stem import WordNetLemmatizer
+import math
 
 def loadBookkeeping():
     with open('WEBPAGES_RAW/bookkeeping.json', 'r') as json_file:
@@ -56,10 +57,44 @@ def constructIndex(data, collection):
             print(f'Page indexed (ID: {docID}): {url}')
     return
 
+'''
+{
+    '_id': 'token',
+    'postings': [{'docID': '0/11', 'frequency': 10, 'tf_idf': 2, 'tags':['h1', 'h2', 'title', 'strong']}, {'docID': '0/34', 'frequency': 10, 'tf_idf': 4, 'tags':[]}]
+}
+'''
+def calculateTF_IDF(collection):
+    # Visits every entry in the index and sets the PF-IDF for each one.
+    # https://stackoverflow.com/a/51596944
+    '''
+    collection.update_many(
+        {},
+        {'$set': {'postings.$[].tf_idf': 1}}
+    )
+    '''
+
+    n = float(collection.count_documents({}))
+    cursors = collection.find()
+    for document in cursors:
+        entryID = document['_id']
+        df = len(document['postings'])
+        idf = math.log((n / df), 10)
+        newPostings = []
+        i = 0
+        while i < len(document['postinigs']):
+            tf_idf = (1 + math.log(float(document['postings'][i]['frequency']))) * idf
+            temp_post = document['postings'][i]
+            temp_post['tf_idf'] = tf_idf
+            newPostings.append(temp_post)
+            i += 1
+        collection.find_one_and_replace({'_id': entryID}, {'postings': newPostings})
+    return
+
 if __name__ == "__main__":
     myClient = pymongo.MongoClient('mongodb://localhost:27017/')
     mydb = myClient['myDatabase']
     myCollection = mydb['testIndex']
 
     myData = loadBookkeeping()
-    constructIndex(myData, myCollection)
+    # constructIndex(myData, myCollection)
+    calculateTF_IDF(myCollection)
