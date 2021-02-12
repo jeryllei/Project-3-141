@@ -11,11 +11,6 @@ def loadBookkeeping():
         data = json.load(json_file)
     return data
 
-def loadBookkeepingTest():
-    with open('bookkeeperTEST.json', 'r') as json_file:
-        data = json.load(json_file)
-    return data
-
 # Structure of DB:
 '''
 {
@@ -57,22 +52,7 @@ def constructIndex(data, collection):
             print(f'Page indexed (ID: {docID}): {url}')
     return
 
-'''
-{
-    '_id': 'token',
-    'postings': [{'docID': '0/11', 'frequency': 10, 'tf_idf': 2, 'tags':['h1', 'h2', 'title', 'strong']}, {'docID': '0/34', 'frequency': 10, 'tf_idf': 4, 'tags':[]}]
-}
-'''
 def calculateTF_IDF(collection):
-    # Visits every entry in the index and sets the PF-IDF for each one.
-    # https://stackoverflow.com/a/51596944
-    '''
-    collection.update_many(
-        {},
-        {'$set': {'postings.$[].tf_idf': 1}}
-    )
-    '''
-
     n = float(collection.count_documents({}))
     cursors = collection.find()
     for document in cursors:
@@ -97,5 +77,5 @@ if __name__ == "__main__":
     myCollection = mydb['testIndex']
 
     myData = loadBookkeeping()
-    # constructIndex(myData, myCollection)
+    constructIndex(myData, myCollection)
     calculateTF_IDF(myCollection)
