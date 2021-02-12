@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
             # For each word in the user input, it finds if it is in the index and collects the documents and tf-idf scores associated with them into ranked_results.
             for word in userInput:
-                word_results = myCollection.find_one()
+                word_results = myCollection.find_one({'_id': word})
                 if word_results != None:
                     # word results is the postings list for a token
                     word_results = word_results['postings']
