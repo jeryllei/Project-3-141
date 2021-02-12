@@ -81,13 +81,14 @@ def calculateTF_IDF(collection):
         idf = math.log((n / df), 10)
         newPostings = []
         i = 0
-        while i < len(document['postinigs']):
+        while i < len(document['postings']):
             tf_idf = (1 + math.log(float(document['postings'][i]['frequency']))) * idf
             temp_post = document['postings'][i]
             temp_post['tf_idf'] = tf_idf
             newPostings.append(temp_post)
             i += 1
         collection.find_one_and_replace({'_id': entryID}, {'postings': newPostings})
+        print(f'Calculated {entryID} postings TF-IDF.')
     return
 
 if __name__ == "__main__":
