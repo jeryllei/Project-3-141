@@ -55,21 +55,26 @@ if __name__ == '__main__':
                 for docID in ranked_IDs:
                     print(f'Result {i} of {len(ranked_IDs)}\tDocID: {docID}\tURL: {docIDs[docID]}')
                     i += 1
-                print(f'End of query results. {len(ranked_IDs)} total results found.\n')
+                print(f'End of query results. {len(ranked_IDs)} total result(s) found.\n')
             else:
                 print('Search query returned no results.\n')
 
         # Handles single word inputs.
         else:
             if myCollection.find_one({'_id': userInput}) != None:
+                ranked_results = defaultdict(float)
+                ranked_IDs = []
                 # results is a list of dictionaries
                 results = myCollection.find_one({'_id': userInput})['postings']
-                i = 1
                 for post in results:
-                    result_docID = post['docID']
-                    print(f'Result {i} of {len(results)}\tDocID: {result_docID}\tURL: {docIDs[result_docID]}')
-                    i += 1
-                print(f'End of query results. {len(results)} total results found.\n')
+                    ranked_results[post['docID']] += post['tf_idf']
+                ranked_IDs = [docID for docID, score in sorted(ranked_results.items(), key=lambda item: item[1], reverse=True)]
+                i = 1
+                if len(ranked_IDs) > 0:
+                    for docID in ranked_IDs:
+                        print(f'Result {i} of {len(ranked_IDs)}\tDocID: {docID}\tURL: {docIDs[docID]}')
+                        i += 1
+                    print(f'End of query results. {len(ranked_IDs)} total result(s) found. \n')
             else:
                 print('Search query returned no results.\n')
     
