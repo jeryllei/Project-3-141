@@ -73,11 +73,8 @@ if __name__ == '__main__':
                 i = 1
                 if len(ranked_IDs) > 0:
                     for docID in ranked_IDs:
-                        #print(f'Result {i} of {len(ranked_IDs)}\tDocID: {docID}\tURL: {docIDs[docID]}')
-                        print(f'{docIDs[docID]}')
+                        print(f'Result {i} of {len(ranked_IDs)}\tDocID: {docID}\tURL: {docIDs[docID]}')
                         i += 1
-                        if i == 20:
-                            break
                     print(f'End of query results. {len(ranked_IDs)} total result(s) found. \n')
             else:
                 print('Search query returned no results.\n')
