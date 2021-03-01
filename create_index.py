@@ -71,6 +71,13 @@ def calculateTF_IDF(collection):
         print(f'Calculated {entryID} postings TF-IDF.')
     return
 
+def addHTMLTags(collection):
+    n = float(collection.count_documents({}))
+    cursors = collection.find()
+    for document in cursors:
+        pass
+    return
+
 if __name__ == "__main__":
     myClient = pymongo.MongoClient('mongodb://localhost:27017/')
     mydb = myClient['myDatabase']
