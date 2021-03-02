@@ -52,6 +52,13 @@ def constructIndex(data, collection):
             print(f'Page indexed (ID: {docID}): {url}')
     return
 
+def addHTMLTags(data, collection):
+    n = float(collection.count_documents({}))
+    cursors = collection.find()
+    for document in cursors:
+        pass
+    return
+
 def calculateTF_IDF(collection):
     n = float(collection.count_documents({}))
     cursors = collection.find()
@@ -69,13 +76,6 @@ def calculateTF_IDF(collection):
             i += 1
         collection.find_one_and_replace({'_id': entryID}, {'postings': newPostings})
         print(f'Calculated {entryID} postings TF-IDF.')
-    return
-
-def addHTMLTags(collection):
-    n = float(collection.count_documents({}))
-    cursors = collection.find()
-    for document in cursors:
-        pass
     return
 
 if __name__ == "__main__":
