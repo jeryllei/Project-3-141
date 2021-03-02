@@ -19,6 +19,7 @@ def loadBookkeeping():
 }
 '''
 def constructIndex(data, collection):
+    currentProgress = 1.0
     for docID, url in data.items():
         directory = 'WEBPAGES_RAW/' + docID
         with open(directory, 'r', encoding='utf-8') as html_page:
@@ -49,14 +50,64 @@ def constructIndex(data, collection):
                     new_post = {'docID': docID, 'frequency': freq, 'tf_idf': 0, 'tags': []}
                     collection.find_one_and_update({'_id': token}, {'$push': {'postings': new_post}})
             
-            print(f'Page indexed (ID: {docID}): {url}')
+            print(f'Page indexed (ID: {docID}) {(currentProgress / 37497) * 100}%: {url}')
+            currentProgress += 1
     return
 
+'''
+{
+    '_id': 'token',
+    'postings': [{'docID': '0/11', 'frequency': 10, 'tf_idf': 2, 'tags':['h1', 'h2', 'title', 'strong']}, {'docID': '0/34', 'frequency': 10, 'tf_idf': 4, 'tags':[]}]
+}
+'''
 def addHTMLTags(data, collection):
-    n = float(collection.count_documents({}))
-    cursors = collection.find()
-    for document in cursors:
-        pass
+    for docID, url in data.items():
+        directory = 'WEBPAGES_RAW/' + docID
+        with open(directory, 'r', encoding='utf-8') as html_page:
+            soup = BeautifulSoup(html_page, 'html.parser')
+            lemmatizer = WordNetLemmatizer()
+            # Getting text inside an HTML tag: https://www.w3resource.com/python-exercises/BeautifulSoup/python-beautifulsoup-exercise-11.php
+            h1 = [lemmatizer.lemmatize(word).lower() for word in word_tokenize(' '.join([x.text.strip() for x in soup.find_all('h1')])) if word.isalnum()]
+            h2 = [lemmatizer.lemmatize(word).lower() for word in word_tokenize(' '.join([x.text.strip() for x in soup.find_all('h2')])) if word.isalnum()]
+            title = [lemmatizer.lemmatize(word).lower() for word in word_tokenize(' '.join([x.text.strip() for x in soup.find_all('title')])) if word.isalnum()]
+            strong = [lemmatizer.lemmatize(word).lower() for word in word_tokenize(' '.join([x.text.strip() for x in soup.find_all('strong')])) if word.isalnum()]
+            for word in h1:
+                entryPostings = collection.find_one({'_id': word})
+                if entryPostings != None:
+                    entryPostings = entryPostings['postings']
+                    for posting in entryPostings:
+                        if posting['docID'] == docID:
+                            posting['tags'].append('h1')
+                            break
+                    collection.find_one_and_replace({'_id': word}, {'postings': entryPostings})
+            for word in h2:
+                entryPostings = collection.find_one({'_id': word})
+                if entryPostings != None:
+                    entryPostings = entryPostings['postings']
+                    for posting in entryPostings:
+                        if posting['docID'] == docID:
+                            posting['tags'].append('h2')
+                            break
+                    collection.find_one_and_replace({'_id': word}, {'postings': entryPostings})
+            for word in title:
+                entryPostings = collection.find_one({'_id': word})
+                if entryPostings != None:
+                    entryPostings = entryPostings['postings']
+                    for posting in entryPostings:
+                        if posting['docID'] == docID:
+                            posting['tags'].append('title')
+                            break
+                    collection.find_one_and_replace({'_id': word}, {'postings': entryPostings})
+            for word in strong:
+                entryPostings = collection.find_one({'_id': word})
+                if entryPostings != None:
+                    entryPostings = entryPostings['postings']
+                    for posting in entryPostings:
+                        if posting['docID'] == docID:
+                            posting['tags'].append('strong')
+                            break
+                    collection.find_one_and_replace({'_id': word}, {'postings': entryPostings})
+            print(f'Tagged {docID}.')
     return
 
 def calculateTF_IDF(collection):
@@ -81,8 +132,9 @@ def calculateTF_IDF(collection):
 if __name__ == "__main__":
     myClient = pymongo.MongoClient('mongodb://localhost:27017/')
     mydb = myClient['myDatabase']
-    myCollection = mydb['testIndex']
-
+    myCollection = mydb['index']
     myData = loadBookkeeping()
+
     constructIndex(myData, myCollection)
     calculateTF_IDF(myCollection)
+    addHTMLTags(myData, myCollection)
