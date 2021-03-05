@@ -136,5 +136,5 @@ if __name__ == "__main__":
     myData = loadBookkeeping()
 
     constructIndex(myData, myCollection)
-    #calculateTF_IDF(myCollection)
-    #addHTMLTags(myData, myCollection)
+    calculateTF_IDF(myCollection)
+    addHTMLTags(myData, myCollection)
