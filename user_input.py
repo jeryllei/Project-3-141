@@ -1,18 +1,63 @@
 from collections import defaultdict
 import pymongo
 import json
+import math
+from scipy import spatial
 
 def loadBookkeeping():
     with open('WEBPAGES_RAW/bookkeeping.json', 'r') as json_file:
         data = json.load(json_file)
     return data
 
-def cosineScoring(userInput, collection, docIDs):
-    # {docID: sum(cos(q, d)), }
-    ranked_results = defaultdict(float)
-    for query in userInput:
-        queryResults = collection.find_one({'_id': query})
-    pass
+def calculateQueryTFIDF(query, collection, collectionSize):
+    queryTFIDFs = defaultdict(float)
+    normalizedTFIDFs = defaultdict(float)
+    wordFrequency = defaultdict(int)
+    for word in query:
+        # TF is calculated using the raw number of occurences of the term in the search query.
+        wordFrequency[word] += 1
+    for word in query:
+        df = len(collection.find_one({'_id': word})['postings'])
+        tf_idf = wordFrequency[word] * math.log((collectionSize / df), 10)
+        queryTFIDFs[word] += tf_idf
+    queryLength = math.sqrt(sum([tf_idf**2 for tf_idf in list(queryTFIDFs.values())]))
+    for word, tf_idf in queryTFIDFs.items():
+        normalizedTFIDFs[word] = tf_idf * queryLength
+    return normalizedTFIDFs
+
+def createDocVectors(query, collection):
+    # document vector structure:
+    '''
+    {docID1: [tf-idf1, tf-idf2], docID2: [tf-idf1, tf-idf2]}
+    '''
+    docVectors = defaultdict(list)
+    listOfPostings = []
+    for term in query:
+        termPostings = collection.find_one({'_id': term})
+        if termPostings != None:
+            listOfPostings.append(termPostings['postings'])
+        else:
+            listOfPostings.append([])
+    # Initializes docVectors with every docID that is found by the query
+    for postings in listOfPostings:
+        for posting in postings:
+            docVectors[posting['docID']] = []
+
+    docIDs = list(docVectors.keys())
+    for postings in listOfPostings:
+        postingsIDs = []
+        for posting in postings:
+            postingsIDs.append(posting['docID'])
+        for docID in docIDs:
+            if docID not in postingsIDs:
+                docVectors[docID].append(0)
+            else:
+                for posting in postings:
+                    docVectors[docID].append(posting['tf_idf'])
+    for docID, tf_idfs in docVectors.items():
+        docLength = math.sqrt(sum([tf_idf**2 for tf_idf in tf_idfs]))
+        docVectors[docID] = [tf_idf / docLength for tf_idf in tf_idfs]
+    return docVectors
 
 # Function to print out results of the search query. Limited to 20 results, extra results are truncated.
 def printResults(rankedDocIDs, docIDs):
@@ -44,7 +89,10 @@ if __name__ == '__main__':
     myCollection = mydb['oneGramIndex']
 
     docIDs = loadBookkeeping()
-    
+    collectionNumber = float(myCollection.count_documents({}))
+
+    # Weighting scheme is ltc.ntc
+
     while True:
         # Gets the user input and lower cases it. Index is also constructed with lower cased entries.
         userInput = input('Enter a query (type in \'quit\' to exit): ').lower()
@@ -52,8 +100,23 @@ if __name__ == '__main__':
             print('Exiting program...')
             break
         
+        query = userInput.split(' ')
+        queryTF_IDF = list(calculateQueryTFIDF(query, myCollection, collectionNumber).values())
+        # document vectors structure:
+        '''
+        {docID1: [tf-idf1, tf-idf2], docID2: [tf-idf1, tf-idf2]}
+        '''
+        documentVectors = createDocVectors(query, myCollection)
+        documentCosineScores = defaultdict(float)
+        for docID, tf_idfs in documentVectors.items():
+            documentCosineScores[docID] += 1 - spatial.distance.cosine(queryTF_IDF)
+        rankedIDs = [docID for docID, score in sorted(documentCosineScores.items(), key=lambda item: item[1], reverse=True)]
+        printResults(rankedIDs, docIDs)
+
+        
         # Handles input that is more than 1 word.
         if len(userInput.split(' ')) > 1:
+            # TODO: remove the list comprehension, it doesn't change anything im dumb
             userInput = [inpu for inpu in userInput.split(' ')]
             # ranked_results is a dictionary of docID keys and sum of tf-idf scores values.
             # Results that contain more parts of the query will be handled already by how a defaultdict functions.
