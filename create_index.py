@@ -111,20 +111,29 @@ def addHTMLTags(data, collection):
     return
 
 def calculateTF_IDF(collection):
+    # n is total number of documents inside the index collection
     n = float(collection.count_documents({}))
+    # cursors is an iterable of every single document in the index collection
     cursors = collection.find()
     for document in cursors:
+        # entry id is a single word
         entryID = document['_id']
         df = len(document['postings'])
         idf = math.log((n / df), 10)
+        # constructs a new postings list to be inserted back in the database
         newPostings = []
         i = 0
         while i < len(document['postings']):
+            # calculates the tf-idf by going through each posting in the postings list for a word
             tf_idf = (1 + math.log(float(document['postings'][i]['frequency']))) * idf
+            # temp_post is a dictionary of the current posting from the postings list
             temp_post = document['postings'][i]
+            # sets the tf-idf of the current posting
             temp_post['tf_idf'] = tf_idf
+            # adds the updated posting with the tf-idf to the postings list
             newPostings.append(temp_post)
             i += 1
+        # replaces the old postings list that is missing tf-idfs with the new updated postings list
         collection.find_one_and_replace({'_id': entryID}, {'postings': newPostings})
         print(f'Calculated {entryID} postings TF-IDF.')
     return
