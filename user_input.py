@@ -36,6 +36,7 @@ def createDocVectors(query, collection):
     '''
     docVectors = defaultdict(list)
     listOfPostings = []
+    # Grab all postings for the query
     for term in query:
         termPostings = collection.find_one({'_id': term})
         if termPostings != None:
@@ -46,20 +47,21 @@ def createDocVectors(query, collection):
     for postings in listOfPostings:
         for posting in postings:
             docVectors[posting['docID']] = []
-
+    # Grabs all docIDs from document vectors.
     docIDs = list(docVectors.keys())
     for postings in listOfPostings:
-        # postingsIDs is the list of docIDs
+        # postingsIDs is the list of docIDs in that particular postings
         postingsIDs = []
         for posting in postings:
             postingsIDs.append(posting['docID'])
-        
+        # If document in docIDs was not found in the postings list, then it is assigned a score of 0 for that term.
         for docID in docIDs:
             if docID not in postingsIDs:
                 docVectors[docID].append(0)
-
+        # Assigns the tf-idf scores to document vectors
         for posting in postings:
             docVectors[posting['docID']].append(posting['tf_idf'])
+    # Normalize tf-idf scores
     for docID, tf_idfs in docVectors.items():
         docLength = math.sqrt(sum([tf_idf**2 for tf_idf in tf_idfs]))
         docVectors[docID] = [tf_idf / docLength for tf_idf in tf_idfs]
@@ -82,6 +84,7 @@ def printResults(rankedDocIDs, docIDs):
     else:
         print(f'Search query returned no results.\n')
 
+# Prints out results of the search query, with docIDs but no URLs attached. URLs are printed out in a file instead.
 def printResultsDebug(rankedDocIDs, docIDs):
     file = open('output.txt', 'w')
     if len(rankedDocIDs) > 0:
@@ -119,6 +122,7 @@ if __name__ == '__main__':
     debugModeInput = input('Enter debug mode (Y/N): ').lower()
     if debugModeInput == 'y':
         debugMode = True
+        # Count number of unique docIDs in the index.
         '''uniqueDocIDs = set()
         cursors = myCollection.find()
         for document in cursors:
@@ -143,9 +147,11 @@ if __name__ == '__main__':
         numDocs = len(documentVectors.keys())
         x = 0
         for docID, tf_idfs in documentVectors.items():
+            # calculating cosine similarity
             documentCosineScores[docID] += 1 - spatial.distance.cosine(queryTF_IDF, tf_idfs)
             if debugMode:
                 print(f'Working on {x} out of {numDocs}')
+            # adding HTML tag weighting
             for term in query:
                 collectionResult = myCollection.find_one({'_id': term})
                 if collectionResult != None:
@@ -157,6 +163,7 @@ if __name__ == '__main__':
                             break
             x += 1
         rankedIDs = [docID for docID, score in sorted(documentCosineScores.items(), key=lambda item: item[1], reverse=True)]
+        # debugging is a dictionary of docID and scores
         debugging = {k: v for k, v in sorted(documentCosineScores.items(), key=lambda item: item[1], reverse=True)}
         if debugMode:
             printResultsDebug(rankedIDs, docIDs)

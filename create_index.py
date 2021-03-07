@@ -25,23 +25,17 @@ def constructIndex(data, collection):
         with open(directory, 'r', encoding='utf-8') as html_page:
             soup = BeautifulSoup(html_page, 'html.parser')
             page_text = soup.getText()
-
-            # page_title = soup.head
-            # if page_title != None and soup.head.title != None:
-            #     page_title = str(soup.head.title.text).strip()
-            # else:
-            #     page_title = 'No title'
-            # collection.insert_one({'docID': docID, 'url': url, 'page_title': page_title})
             
             page_text_tokenized = word_tokenize(page_text)
             lemmatizer = WordNetLemmatizer()
             page_text_lemmatized = [lemmatizer.lemmatize(word) for word in page_text_tokenized if word.isalnum()]
-
+            # token dictionary is a dictionary of each token inside a document with a count of how many appeared
             token_dictionary = defaultdict(int)
             for word in page_text_lemmatized:
                 token_dictionary[word.lower()] += 1
             
             for token, freq in token_dictionary.items():
+                # Goes through the entire token dictionary and adds it to the index if it doesn't exist, otherwise update the postings list for that token.
                 if collection.find_one({'_id': token}) == None:
                     collection.insert_one({'_id': token,
                                             'postings': [{'docID': docID, 'frequency': freq, 'tf_idf': 0, 'tags': []}]
@@ -71,6 +65,8 @@ def addHTMLTags(data, collection):
             h2 = [lemmatizer.lemmatize(word).lower() for word in word_tokenize(' '.join([x.text.strip() for x in soup.find_all('h2')])) if word.isalnum()]
             title = [lemmatizer.lemmatize(word).lower() for word in word_tokenize(' '.join([x.text.strip() for x in soup.find_all('title')])) if word.isalnum()]
             strong = [lemmatizer.lemmatize(word).lower() for word in word_tokenize(' '.join([x.text.strip() for x in soup.find_all('strong')])) if word.isalnum()]
+            # Could be done in a single function with HTML tags as an argument passed in as well.
+            # Adds HTML tags to postings inside the postings list.
             for word in h1:
                 entryPostings = collection.find_one({'_id': word})
                 if entryPostings != None:
