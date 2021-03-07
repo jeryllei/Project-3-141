@@ -137,7 +137,7 @@ def calculateTF_IDF(collection):
 if __name__ == "__main__":
     myClient = pymongo.MongoClient('mongodb://localhost:27017/')
     mydb = myClient['myDatabase']
-    myCollection = mydb['newIndex']
+    myCollection = mydb['oneGramIndex']
     myData = loadBookkeeping()
 
     constructIndex(myData, myCollection)
